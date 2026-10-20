@@ -1,0 +1,18 @@
+kpi_id: persistency_12m
+version: 1
+status: APPROVED
+label: 12-month persistency
+definition: Share of patients still on therapy 12 months after starting (patient-level claims vendor study). Not available on the platform.
+unit: fraction
+aggregation: point
+grains: [quarter, month]
+dimensions: []
+synonyms: ["persistency", "12-month persistency", "12 month persistency", "persistence", "patients on therapy at 12 months"]
+mapping_description: Share of patients persisting on therapy after 12 months.
+claim_class: descriptive
+owner: market-research@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.0, abs: 0.0005, use_display_rounding: true}
+harness_link: null
+platform: none

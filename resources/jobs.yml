@@ -1,0 +1,406 @@
+resources:
+  experiments:
+    kpi_evidence:
+      name: ${workspace.root_path}/kpi-evidence-mlflow
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+
+  jobs:
+    kpi_wheels:
+      name: kpi-evidence-publish-wheels
+      description: "Copy the deployed kpi_evidence and reconloop wheels into the wheels volume and write requirements.txt, so notebooks can %pip install them. Run after every deploy."
+      max_concurrent_runs: 1
+      timeout_seconds: 1200
+      performance_target: PERFORMANCE_OPTIMIZED
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+        - group_name: ${var.user_group}
+          level: CAN_VIEW
+      tags:
+        project: kpi-evidence-service
+        component: wheels
+        target: ${bundle.target}
+      email_notifications:
+        on_failure:
+          - ${var.notify_email}
+      parameters:
+        - name: source
+          default: ${workspace.artifact_path}/.internal
+        - name: dest
+          default: /Volumes/${var.catalog}/${resources.schemas.kpi_evidence.name}/${resources.volumes.wheels.name}
+      environments:
+        - environment_key: stdlib
+          spec:
+            environment_version: "5"
+      tasks:
+        - task_key: copy_wheels
+          environment_key: stdlib
+          max_retries: 1
+          min_retry_interval_millis: 30000
+          timeout_seconds: 900
+          spark_python_task:
+            python_file: ../scripts/publish_wheels.py
+            parameters: ["copy", "--source", "{{job.parameters.source}}", "--dest", "{{job.parameters.dest}}"]
+
+    kpi_check:
+      name: kpi-evidence-check
+      description: "Optional scheduled check: reads the report files in a folder (+ optional KPI table), compares every KPI value with the platform and writes the HTML and Excel comparison report to out_dir. Publishes nothing."
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      performance_target: STANDARD
+      schedule:
+        quartz_cron_expression: "0 0 7 ? * MON"
+        timezone_id: UTC
+        pause_status: PAUSED
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+        - group_name: ${var.user_group}
+          level: CAN_VIEW
+      tags:
+        project: kpi-evidence-service
+        component: check
+        target: ${bundle.target}
+      email_notifications:
+        on_failure:
+          - ${var.notify_email}
+      notification_settings:
+        no_alert_for_skipped_runs: true
+        no_alert_for_canceled_runs: true
+      parameters:
+        - name: reports
+          default: /Volumes/${var.catalog}/${resources.schemas.kpi_evidence.name}/${resources.volumes.reports.name}/check/reports/
+        - name: kpis
+          default: ""
+        - name: out_dir
+          default: /Volumes/${var.catalog}/${resources.schemas.kpi_evidence.name}/${resources.volumes.reports.name}/check/out/
+        - name: brand
+          default: ""
+        - name: catalog
+          default: ${var.catalog}
+        - name: gov_schema
+          default: ${resources.schemas.kpi_gov.name}
+        - name: ai_mode
+          default: "off"
+        - name: wheels
+          default: /Volumes/${var.catalog}/${resources.schemas.kpi_evidence.name}/${resources.volumes.wheels.name}/requirements.txt
+      tasks:
+        - task_key: check
+          max_retries: 0
+          timeout_seconds: 3600
+          notebook_task:
+            notebook_path: ../notebooks/check_reports.py
+            base_parameters:
+              reports: "{{job.parameters.reports}}"
+              kpis: "{{job.parameters.kpis}}"
+              out_dir: "{{job.parameters.out_dir}}"
+              brand: "{{job.parameters.brand}}"
+              catalog: "{{job.parameters.catalog}}"
+              gov_schema: "{{job.parameters.gov_schema}}"
+              ai_mode: "{{job.parameters.ai_mode}}"
+              wheels: "{{job.parameters.wheels}}"
+
+    kpi_bootstrap:
+      name: kpi-evidence-bootstrap
+      description: "Optional: create the service tables and views (persist=True / kpi_pipeline), the governed views, sync the KPI registry, optionally load the demo platform and seed sample reports."
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+        - group_name: ${var.user_group}
+          level: CAN_VIEW
+      tags:
+        project: kpi-evidence-service
+        component: bootstrap
+        target: ${bundle.target}
+      email_notifications:
+        on_failure:
+          - ${var.notify_email}
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${resources.schemas.kpi_evidence.name}
+        - name: gov_schema
+          default: ${resources.schemas.kpi_gov.name}
+        - name: volume_path
+          default: /Volumes/${var.catalog}/${resources.schemas.kpi_evidence.name}/${resources.volumes.reports.name}
+        - name: load_demo
+          default: ${var.load_demo}
+        - name: seed_samples
+          default: "false"
+        - name: max_docs
+          default: "200"
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "5"
+            dependencies:
+              - ../libs/reconloop/dist/*.whl
+              - ../dist/*.whl
+      tasks:
+        - task_key: bootstrap
+          environment_key: default
+          max_retries: 1
+          min_retry_interval_millis: 60000
+          timeout_seconds: 2400
+          python_wheel_task:
+            package_name: kpi_evidence
+            entry_point: kpi-evidence-bootstrap
+            named_parameters:
+              backend: databricks
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              gov_schema: "{{job.parameters.gov_schema}}"
+              volume_path: "{{job.parameters.volume_path}}"
+              platform_schema: ${var.platform_schema}
+              load_demo: "{{job.parameters.load_demo}}"
+              seed_samples: "{{job.parameters.seed_samples}}"
+              run_id: "{{job.run_id}}"
+
+        - task_key: verify_list_ready
+          depends_on:
+            - task_key: bootstrap
+          max_retries: 0
+          timeout_seconds: 600
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/sql/jobs/list_ready_documents.sql
+            parameters:
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              max_docs: "{{job.parameters.max_docs}}"
+
+    kpi_pipeline:
+      name: kpi-evidence-pipeline
+      description: "Optional, manual: register reports in the inbox, extract every number, map, check data quality, reconcile, save the SQL, detect conflicts. Publishes nothing."
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+        - group_name: ${var.user_group}
+          level: CAN_VIEW
+      max_concurrent_runs: 1
+      queue:
+        enabled: true
+      timeout_seconds: 7200
+      performance_target: STANDARD
+      health:
+        rules:
+          - metric: RUN_DURATION_SECONDS
+            op: GREATER_THAN
+            value: 3600
+      email_notifications:
+        on_failure:
+          - ${var.notify_email}
+        on_duration_warning_threshold_exceeded:
+          - ${var.notify_email}
+      notification_settings:
+        no_alert_for_skipped_runs: true
+        no_alert_for_canceled_runs: true
+      tags:
+        project: kpi-evidence-service
+        component: pipeline
+        target: ${bundle.target}
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${resources.schemas.kpi_evidence.name}
+        - name: gov_schema
+          default: ${resources.schemas.kpi_gov.name}
+        - name: volume_path
+          default: /Volumes/${var.catalog}/${resources.schemas.kpi_evidence.name}/${resources.volumes.reports.name}
+        - name: ai_mode
+          default: ${var.ai_mode}
+        - name: ai_model
+          default: ${var.ai_model}
+        - name: max_docs
+          default: "200"
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "5"
+            dependencies:
+              - ../libs/reconloop/dist/*.whl
+              - ../dist/*.whl
+      tasks:
+        - task_key: register
+          environment_key: default
+          max_retries: 2
+          min_retry_interval_millis: 60000
+          retry_on_timeout: true
+          timeout_seconds: 900
+          python_wheel_task:
+            package_name: kpi_evidence
+            entry_point: kpi-evidence-register
+            named_parameters:
+              backend: databricks
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              gov_schema: "{{job.parameters.gov_schema}}"
+              volume_path: "{{job.parameters.volume_path}}"
+              ai_mode: "{{job.parameters.ai_mode}}"
+              ai_model: "{{job.parameters.ai_model}}"
+              run_id: "{{job.run_id}}"
+              trigger_location: "{{job.trigger.file_arrival.location}}"
+
+        - task_key: list_ready
+          depends_on:
+            - task_key: register
+          max_retries: 1
+          min_retry_interval_millis: 30000
+          timeout_seconds: 600
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/sql/jobs/list_ready_documents.sql
+            parameters:
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              max_docs: "{{job.parameters.max_docs}}"
+
+        - task_key: extract
+          depends_on:
+            - task_key: list_ready
+          for_each_task:
+            inputs: "{{tasks.list_ready.output.rows}}"
+            concurrency: 4
+            task:
+              task_key: extract_one
+              environment_key: default
+              max_retries: 1
+              min_retry_interval_millis: 60000
+              timeout_seconds: 1800
+              python_wheel_task:
+                package_name: kpi_evidence
+                entry_point: kpi-evidence-extract
+                named_parameters:
+                  backend: databricks
+                  catalog: "{{job.parameters.catalog}}"
+                  schema: "{{job.parameters.schema}}"
+                  gov_schema: "{{job.parameters.gov_schema}}"
+                  volume_path: "{{job.parameters.volume_path}}"
+                  ai_mode: "{{job.parameters.ai_mode}}"
+                  ai_model: "{{job.parameters.ai_model}}"
+                  run_id: "{{job.run_id}}"
+                  doc_id: "{{input.doc_id}}"
+
+        - task_key: process
+          depends_on:
+            - task_key: extract
+          run_if: ALL_DONE
+          environment_key: default
+          max_retries: 1
+          min_retry_interval_millis: 120000
+          timeout_seconds: 3600
+          python_wheel_task:
+            package_name: kpi_evidence
+            entry_point: kpi-evidence-process
+            named_parameters:
+              backend: databricks
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              gov_schema: "{{job.parameters.gov_schema}}"
+              volume_path: "{{job.parameters.volume_path}}"
+              ai_mode: "{{job.parameters.ai_mode}}"
+              ai_model: "{{job.parameters.ai_model}}"
+              run_id: "{{job.run_id}}"
+
+
+    kpi_dq_and_eval:
+      name: kpi-evidence-nightly-dq-and-eval
+      description: "Optional: data-quality checks on the governed views and evaluation on the labeled synthetic report set."
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+        - group_name: ${var.user_group}
+          level: CAN_VIEW
+      max_concurrent_runs: 1
+      queue:
+        enabled: true
+      timeout_seconds: 5400
+      schedule:
+        quartz_cron_expression: "0 30 5 * * ?"
+        timezone_id: UTC
+        pause_status: PAUSED
+      email_notifications:
+        on_failure:
+          - ${var.notify_email}
+      notification_settings:
+        no_alert_for_skipped_runs: true
+        no_alert_for_canceled_runs: true
+      tags:
+        project: kpi-evidence-service
+        component: nightly
+        target: ${bundle.target}
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${resources.schemas.kpi_evidence.name}
+        - name: gov_schema
+          default: ${resources.schemas.kpi_gov.name}
+        - name: volume_path
+          default: /Volumes/${var.catalog}/${resources.schemas.kpi_evidence.name}/${resources.volumes.reports.name}
+        - name: ai_mode
+          default: ${var.ai_mode}
+        - name: ai_model
+          default: ${var.ai_model}
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "5"
+            dependencies:
+              - ../libs/reconloop/dist/*.whl
+              - ../dist/*.whl
+        - environment_key: eval
+          spec:
+            environment_version: "5"
+            dependencies:
+              - ../libs/reconloop/dist/*.whl
+              - ../dist/*.whl
+              - mlflow-skinny>=3.4
+      tasks:
+        - task_key: dq
+          environment_key: default
+          max_retries: 2
+          min_retry_interval_millis: 120000
+          timeout_seconds: 1800
+          python_wheel_task:
+            package_name: kpi_evidence
+            entry_point: kpi-evidence-dq
+            named_parameters:
+              backend: databricks
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              gov_schema: "{{job.parameters.gov_schema}}"
+              volume_path: "{{job.parameters.volume_path}}"
+              ai_mode: "{{job.parameters.ai_mode}}"
+              ai_model: "{{job.parameters.ai_model}}"
+              run_id: "{{job.run_id}}"
+
+        - task_key: evaluate
+          depends_on:
+            - task_key: dq
+          run_if: ALL_DONE
+          environment_key: eval
+          max_retries: 1
+          min_retry_interval_millis: 120000
+          timeout_seconds: 3600
+          python_wheel_task:
+            package_name: kpi_evidence
+            entry_point: kpi-evidence-evaluate
+            named_parameters:
+              backend: databricks
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              gov_schema: "{{job.parameters.gov_schema}}"
+              volume_path: "{{job.parameters.volume_path}}"
+              ai_mode: "{{job.parameters.ai_mode}}"
+              ai_model: "{{job.parameters.ai_model}}"
+              run_id: "{{job.run_id}}"
+              mlflow_experiment: ${resources.experiments.kpi_evidence.id}

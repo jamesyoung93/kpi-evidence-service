@@ -1,0 +1,30 @@
+{
+  "document": {
+    "pages": [
+      {"id": 0, "image_uri": "/Volumes/main/kpi_evidence/reports/artifacts/parse_images/field_update_p0.png"},
+      {"id": 1, "image_uri": "/Volumes/main/kpi_evidence/reports/artifacts/parse_images/field_update_p1.png"},
+      {"id": 2, "image_uri": "/Volumes/main/kpi_evidence/reports/artifacts/parse_images/field_update_p2.png"}
+    ],
+    "elements": [
+      {"id": 0, "type": "title", "content": "Kestrel Field Update - May 2026", "confidence": 0.98,
+       "bbox": [{"coord": [60, 40, 980, 96], "page_id": 0}], "description": null},
+      {"id": 1, "type": "text", "content": "TRx 5,910\nBrand awareness: 62%\n184\nReferrals (projected)", "confidence": 0.91,
+       "bbox": [{"coord": [60, 130, 620, 260], "page_id": 0}], "description": null},
+      {"id": 2, "type": "table",
+       "content": "<table><thead><tr><th>Region</th><th colspan=\"2\">May 2026</th></tr><tr><th></th><th>TRx</th><th>vs PY</th></tr></thead><tbody><tr><td>West</td><td>1,265.7</td><td>+4%</td></tr><tr><td>East</td><td>1,200</td><td>n/a</td></tr></tbody></table>",
+       "confidence": 0.87, "bbox": [{"coord": [60, 300, 900, 520], "page_id": 0}], "description": null},
+      {"id": 3, "type": "page_footer", "content": "Source: CRM. Data through May 2026", "confidence": 0.95,
+       "bbox": [{"coord": [60, 1300, 700, 1330], "page_id": 0}], "description": null},
+      {"id": 4, "type": "page_number", "content": "1", "confidence": 0.99,
+       "bbox": [{"coord": [1200, 1300, 1230, 1330], "page_id": 0}], "description": null},
+      {"id": 5, "type": "figure",
+       "content": "{\"title\": \"Call attainment by region\", \"type\": \"bar\", \"x_axis\": {\"title\": \"Region\", \"labels\": [\"East\", \"West\"]}, \"y_axis\": {\"title\": \"% of plan\"}, \"series\": [{\"name\": \"Attainment\", \"values\": [84.4, \"91.9%\"]}]}",
+       "confidence": 0.8, "bbox": [{"coord": [80, 120, 1100, 760], "page_id": 1}],
+       "description": "Bar chart of call attainment by region"},
+      {"id": 6, "type": "figure", "content": null, "confidence": 0.7,
+       "bbox": [{"coord": [80, 800, 600, 1200], "page_id": 1}], "description": "Photo of the field team"}
+    ]
+  },
+  "error_status": [{"error_message": "page rendering timed out", "page_id": 2}],
+  "metadata": {"id": "f1e2d3c4", "version": "2.0"}
+}

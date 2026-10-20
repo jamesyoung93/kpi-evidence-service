@@ -1,0 +1,16 @@
+goal_list:
+  - {brand_id: KESTREL, kpi_id: trx,              cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review, executive_summary]}
+  - {brand_id: KESTREL, kpi_id: nrx,              cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review]}
+  - {brand_id: KESTREL, kpi_id: nbrx,             cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review]}
+  - {brand_id: KESTREL, kpi_id: trx_share,        cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review, executive_summary]}
+  - {brand_id: KESTREL, kpi_id: calls,            cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review, field_update]}
+  - {brand_id: KESTREL, kpi_id: call_attainment,  cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review, field_update]}
+  - {brand_id: KESTREL, kpi_id: samples,          cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review]}
+  - {brand_id: KESTREL, kpi_id: speaker_attendance, cadence: monthly, expected_lag_periods: 1, expected_report_types: [field_update]}
+  - {brand_id: KESTREL, kpi_id: new_writers,      cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review]}
+  - {brand_id: KESTREL, kpi_id: referrals_in,     cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review]}
+  - {brand_id: KESTREL, kpi_id: active_referrers, cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review]}
+  - {brand_id: KESTREL, kpi_id: exfactory_units,  cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review, executive_summary]}
+  - {brand_id: KESTREL, kpi_id: brand_awareness,  cadence: quarterly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review, executive_summary]}
+  - {brand_id: KESTREL, kpi_id: share_of_voice,   cadence: monthly, expected_lag_periods: 1, expected_report_types: [monthly_brand_review]}
+  - {brand_id: KESTREL, kpi_id: persistency_12m,  cadence: quarterly, expected_lag_periods: 1, expected_report_types: [executive_summary]}

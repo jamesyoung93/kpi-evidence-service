@@ -1,0 +1,44 @@
+kpi_id: trx_share
+version: 1
+status: APPROVED
+label: TRx market share
+definition: >-
+  Brand TRx divided by market TRx for the period (ratio of sums, never an average of ratios). The
+  governed market is the advanced-therapy basket; the IL-17 class basket is a permitted variant when a
+  report states it.
+unit: fraction
+aggregation: ratio_of_sums
+grains: [month, quarter, r3m, r6m, r12m, ytd]
+dimensions: [region, district, territory, specialty, payer_channel]
+synonyms: ["trx share", "market share", "share of market", "trx market share", "share", "brand share", "som"]
+mapping_description: Brand share of total prescriptions in its market basket (a fraction or percent).
+claim_class: descriptive
+owner: brand-analytics@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.0, abs: 0.0005, use_display_rounding: true}
+harness_link: {metric_id: trx_share, variant_id: brand_market, source: source_a}
+platform:
+  source_views: [gv_rx_account_monthly, gv_rx_panel_monthly]
+  ratio:
+    numerator: "SELECT SUM(trx_units) AS value FROM {source} WHERE brand = ${brand} AND ${window} AND ${scope}"
+    denominator: "SELECT SUM({basket}) AS value FROM {source} WHERE brand = ${brand} AND ${window} AND ${scope}"
+    scale: 1.0
+    zero_denominator: error
+  params:
+    basket:
+      hypothesis: basket
+      default: advanced_therapy
+      options: {advanced_therapy: advanced_therapy_trx, il17_class: il17_class_trx}
+      describe: {advanced_therapy: "Advanced-therapy market (broad market)", il17_class: "IL-17 class only"}
+      keywords: {il17_class: ["il-17", "il17", "il 17", "class share", "in class"]}
+      permitted: [advanced_therapy, il17_class]
+    source:
+      hypothesis: source
+      default: account_feed
+      options: {account_feed: "${gov}.gv_rx_account_monthly", panel: "${gov}.gv_rx_panel_monthly"}
+      describe: {account_feed: "Account-level feed (no lag)", panel: "Projected retail panel (one-month lag)"}
+      keywords: {panel: ["panel", "projected"]}
+      permitted: [account_feed]
+  checks:
+    period_has_rows: "SELECT CASE WHEN COUNT(*) > 0 THEN 0 ELSE 1 END AS value FROM {source} WHERE ${window}"

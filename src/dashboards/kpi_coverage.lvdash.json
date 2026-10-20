@@ -1,0 +1,539 @@
+{
+  "datasets": [
+    {
+      "name": "ds_published",
+      "displayName": "Published values (current)",
+      "queryLines": [
+        "SELECT brand, kpi_id, scope_key, period_label, period_end, value, unit, display_label,\n",
+        "  validation_status, platform_value, variance_rel, evidence_uri, approved_by, approved_at\n",
+        "FROM published_kpis_current"
+      ]
+    },
+    {
+      "name": "ds_results_by_status",
+      "displayName": "Current results by status",
+      "queryLines": [
+        "SELECT\n",
+        "  brand, status_group,\n",
+        "  CASE status_group\n",
+        "    WHEN 'GOOD' THEN 'Good'\n",
+        "    WHEN 'REVIEW' THEN 'Needs review'\n",
+        "    WHEN 'BLOCKED' THEN 'Blocked'\n",
+        "    ELSE 'Unknown status'\n",
+        "  END AS group_name,\n",
+        "  status_label, status_sort,\n",
+        "  COUNT(*) AS results\n",
+        "FROM kpi_results_current\n",
+        "GROUP BY brand, status_group, status_label, status_sort"
+      ]
+    },
+    {
+      "name": "ds_review_open",
+      "displayName": "Open review items",
+      "queryLines": [
+        "SELECT brand, kpi_id, period_label, period_end, validation_status, status_label, status_sort,\n",
+        "  reason_code, reason_detail, report_value, platform_value, file_name, slide_or_page, created_at\n",
+        "FROM review_open"
+      ]
+    },
+    {
+      "name": "ds_dq_latest",
+      "displayName": "Latest data-quality check run",
+      "queryLines": [
+        "WITH latest AS (\n",
+        "  SELECT check_run_id FROM dq_results ORDER BY checked_at DESC LIMIT 1\n",
+        ")\n",
+        "SELECT d.object_name, d.check_name, d.severity, d.passed, d.violations, d.detail, d.checked_at,\n",
+        "  CASE WHEN d.severity = 'hard' AND NOT d.passed THEN 1 ELSE 0 END AS hard_failure\n",
+        "FROM dq_results AS d\n",
+        "JOIN latest AS l ON d.check_run_id = l.check_run_id"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "p_coverage",
+      "displayName": "Coverage and review",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "w_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## KPI evidence: coverage and review\n",
+                "Published values, current results by status, the open review queue and the latest data-quality checks. Statuses use the same plain names as the review app. Every published value links to its source file in the app's Published KPIs page."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "w_published",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_published",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)",
+                  "displayName": "Published values"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Published values",
+                "showDescription": true,
+                "description": "Current published values (reviewer-approved or published by the automatic policy)."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "w_review_open",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_review_open",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)",
+                  "displayName": "Open review items"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Open review items",
+                "showDescription": true,
+                "description": "Results that wait for a person: review and blocked groups without a decision."
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "w_dq_hard",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_dq_latest",
+                  "fields": [
+                    {
+                      "name": "sum(hard_failure)",
+                      "expression": "SUM(`hard_failure`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(hard_failure)",
+                  "displayName": "Hard data-quality failures"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Hard data-quality failures",
+                "showDescription": true,
+                "description": "Hard checks that failed in the latest run. A failure marks dependent KPIs as a platform data issue."
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "w_results_by_status",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_results_by_status",
+                  "fields": [
+                    {
+                      "name": "group_name",
+                      "expression": "`group_name`"
+                    },
+                    {
+                      "name": "status_label",
+                      "expression": "`status_label`"
+                    },
+                    {
+                      "name": "sum(results)",
+                      "expression": "SUM(`results`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "group_name",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Status group"
+                },
+                "y": {
+                  "fieldName": "sum(results)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Results"
+                },
+                "color": {
+                  "fieldName": "status_label",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Status"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Current results by status",
+                "showDescription": true,
+                "description": "Good = matches platform or captured; Needs review = a person decides; Blocked = access or platform data."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "w_review_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_review_open",
+                  "fields": [
+                    {
+                      "name": "brand",
+                      "expression": "`brand`"
+                    },
+                    {
+                      "name": "kpi_id",
+                      "expression": "`kpi_id`"
+                    },
+                    {
+                      "name": "period_label",
+                      "expression": "`period_label`"
+                    },
+                    {
+                      "name": "status_label",
+                      "expression": "`status_label`"
+                    },
+                    {
+                      "name": "reason_detail",
+                      "expression": "`reason_detail`"
+                    },
+                    {
+                      "name": "report_value",
+                      "expression": "`report_value`"
+                    },
+                    {
+                      "name": "platform_value",
+                      "expression": "`platform_value`"
+                    },
+                    {
+                      "name": "file_name",
+                      "expression": "`file_name`"
+                    },
+                    {
+                      "name": "slide_or_page",
+                      "expression": "`slide_or_page`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "brand",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 0,
+                    "title": "Brand",
+                    "displayName": "Brand"
+                  },
+                  {
+                    "fieldName": "kpi_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 1,
+                    "title": "KPI",
+                    "displayName": "KPI"
+                  },
+                  {
+                    "fieldName": "period_label",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 2,
+                    "title": "Period",
+                    "displayName": "Period"
+                  },
+                  {
+                    "fieldName": "status_label",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 3,
+                    "title": "Status",
+                    "displayName": "Status"
+                  },
+                  {
+                    "fieldName": "reason_detail",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 4,
+                    "title": "Why",
+                    "displayName": "Why"
+                  },
+                  {
+                    "fieldName": "report_value",
+                    "type": "float",
+                    "displayAs": "float",
+                    "visible": true,
+                    "order": 5,
+                    "title": "Report value",
+                    "displayName": "Report value"
+                  },
+                  {
+                    "fieldName": "platform_value",
+                    "type": "float",
+                    "displayAs": "float",
+                    "visible": true,
+                    "order": 6,
+                    "title": "Platform value",
+                    "displayName": "Platform value"
+                  },
+                  {
+                    "fieldName": "file_name",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 7,
+                    "title": "Report file",
+                    "displayName": "Report file"
+                  },
+                  {
+                    "fieldName": "slide_or_page",
+                    "type": "integer",
+                    "displayAs": "integer",
+                    "visible": true,
+                    "order": 8,
+                    "title": "Slide or page",
+                    "displayName": "Slide or page"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Open review items",
+                "showDescription": true,
+                "description": "Sort by any column. Decide each item in the app's Review queue."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "w_dq_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_dq_latest",
+                  "fields": [
+                    {
+                      "name": "object_name",
+                      "expression": "`object_name`"
+                    },
+                    {
+                      "name": "check_name",
+                      "expression": "`check_name`"
+                    },
+                    {
+                      "name": "severity",
+                      "expression": "`severity`"
+                    },
+                    {
+                      "name": "passed",
+                      "expression": "`passed`"
+                    },
+                    {
+                      "name": "violations",
+                      "expression": "`violations`"
+                    },
+                    {
+                      "name": "detail",
+                      "expression": "`detail`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "object_name",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 0,
+                    "title": "Governed view",
+                    "displayName": "Governed view"
+                  },
+                  {
+                    "fieldName": "check_name",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 1,
+                    "title": "Check",
+                    "displayName": "Check"
+                  },
+                  {
+                    "fieldName": "severity",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 2,
+                    "title": "Severity",
+                    "displayName": "Severity"
+                  },
+                  {
+                    "fieldName": "passed",
+                    "type": "boolean",
+                    "displayAs": "boolean",
+                    "visible": true,
+                    "order": 3,
+                    "title": "Passed",
+                    "displayName": "Passed"
+                  },
+                  {
+                    "fieldName": "violations",
+                    "type": "integer",
+                    "displayAs": "integer",
+                    "visible": true,
+                    "order": 4,
+                    "title": "Violations",
+                    "displayName": "Violations"
+                  },
+                  {
+                    "fieldName": "detail",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 5,
+                    "title": "Detail",
+                    "displayName": "Detail"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Latest data-quality checks",
+                "showDescription": true,
+                "description": "Hard checks block reconciliation for the KPIs that read the view."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 18,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ]
+    }
+  ]
+}

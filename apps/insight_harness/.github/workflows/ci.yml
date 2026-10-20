@@ -1,0 +1,36 @@
+name: verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            constraints.txt
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -c constraints.txt -r requirements-dev.txt
+      - name: Verify dependency graph
+        run: python -m pip check
+      - name: Verify generated benchmark is reproducible
+        run: |
+          python data/generate_demo_data.py
+          git diff --exit-code -- data/accounts.csv data/fact_source_a.csv data/fact_source_b.csv data/fact_referral.csv data/ground_truth.json
+      - name: Compile
+        run: python -m compileall -q app.py harness views tests
+      - name: Test
+        run: python -m pytest -q

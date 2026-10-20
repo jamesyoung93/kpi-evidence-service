@@ -1,0 +1,20 @@
+kpi_id: speaker_program_lift
+version: 1
+status: APPROVED
+label: Speaker program TRx lift (claimed)
+definition: >-
+  A causal claim that speaker programs changed TRx. Causal effects need a registered design; a report
+  claim is captured as stated and is never VERIFIED.
+unit: fraction
+aggregation: point
+grains: [month, quarter, r3m]
+dimensions: [region, territory]
+synonyms: ["speaker program lift", "speaker lift", "program lift", "lift from speaker programs", "incremental trx"]
+mapping_description: A claimed percentage lift in prescriptions attributed to speaker programs.
+claim_class: causal
+owner: brand-analytics@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.0, abs: 0.0005, use_display_rounding: true}
+harness_link: null
+platform: none

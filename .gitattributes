@@ -1,0 +1,10 @@
+* text=auto eol=lf
+*.pdf binary
+*.pptx binary
+*.xlsx binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.whl binary
+*.zip binary
+*.duckdb binary

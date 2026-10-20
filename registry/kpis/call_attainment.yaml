@@ -1,0 +1,44 @@
+kpi_id: call_attainment
+version: 1
+status: APPROVED
+label: Call-plan attainment
+definition: >-
+  Calls delivered divided by calls planned, over every HCP with a plan in the period (ratio of sums).
+  Writer-only eligibility and averages of per-HCP ratios are different definitions.
+unit: fraction
+aggregation: ratio_of_sums
+grains: [month, quarter, r3m, r6m, r12m, ytd]
+dimensions: [region, district, territory, specialty, payer_channel]
+synonyms: ["call attainment", "call plan attainment", "call-plan attainment", "attainment", "plan attainment", "reach vs plan", "call plan adherence"]
+mapping_description: Share of planned calls that were delivered (a fraction or percent).
+claim_class: descriptive
+owner: field-analytics@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.0, abs: 0.0005, use_display_rounding: true}
+harness_link: {metric_id: call_attainment, variant_id: actual_plan, source: source_a}
+platform:
+  source_views: [gv_rx_account_monthly]
+  template: |-
+    SELECT {aggregation} AS value
+    FROM ${gov}.gv_rx_account_monthly
+    WHERE brand = ${brand} AND ${window} AND ${scope} AND {eligibility}
+  params:
+    aggregation:
+      hypothesis: measure
+      default: ratio_of_sums
+      options:
+        ratio_of_sums: "SUM(calls) / NULLIF(SUM(call_plan), 0)"
+        mean_of_ratios: "AVG(calls / NULLIF(call_plan, 0))"
+      describe: {ratio_of_sums: "Total calls / total plan", mean_of_ratios: "Average of each HCP's calls / plan"}
+      keywords: {mean_of_ratios: ["average attainment", "mean attainment", "avg attainment"]}
+      permitted: [ratio_of_sums]
+    eligibility:
+      hypothesis: universe
+      default: all_hcps
+      options: {all_hcps: "call_plan > 0", writers_only: "call_plan > 0 AND is_writer = 1"}
+      describe: {all_hcps: "Every HCP with a call plan", writers_only: "Only HCPs who wrote the brand in the period"}
+      keywords: {writers_only: ["writers only", "writing hcps", "among writers"]}
+      permitted: [all_hcps]
+  checks:
+    period_has_rows: "SELECT CASE WHEN COUNT(*) > 0 THEN 0 ELSE 1 END AS value FROM ${gov}.gv_rx_account_monthly WHERE ${window}"

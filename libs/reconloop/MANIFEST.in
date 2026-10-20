@@ -1,0 +1,5 @@
+include AGENT_GUIDE.md
+recursive-include docs *.md
+recursive-include examples *.py *.toml
+recursive-include notebooks *.py
+recursive-include deploy *.sh

@@ -1,0 +1,20 @@
+kpi_id: calls
+version: 1
+status: APPROVED
+label: Details delivered (calls)
+definition: Field sales calls (details) delivered to HCPs in the period, from the CRM activity feed.
+unit: count
+aggregation: sum
+grains: [month, quarter, r3m, r6m, r12m, ytd]
+dimensions: [region, district, territory, specialty, payer_channel]
+synonyms: ["calls", "details", "details delivered", "sales calls", "rep calls", "call volume", "hcp calls"]
+mapping_description: Number of sales calls / details delivered to healthcare professionals.
+claim_class: descriptive
+owner: field-analytics@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.005, abs: 0.0, use_display_rounding: true}
+harness_link: {metric_id: calls, variant_id: std, source: source_a}
+platform:
+  view: gv_rx_account_monthly
+  value: SUM(calls)

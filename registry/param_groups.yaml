@@ -1,0 +1,9 @@
+param_groups:
+  rx_source:
+    source:
+      hypothesis: source
+      default: account_feed
+      options: {account_feed: "${gov}.gv_rx_account_monthly", panel: "${gov}.gv_rx_panel_monthly"}
+      describe: {account_feed: "Account-level feed (no lag)", panel: "Projected retail panel (one-month lag)"}
+      keywords: {panel: ["panel", "projected", "retail panel"]}
+      permitted: [account_feed]

@@ -1,0 +1,42 @@
+resources:
+  schemas:
+    kpi_evidence:
+      catalog_name: ${var.catalog}
+      name: ${var.schema}
+      comment: "KPI evidence service: optional Delta state (persist=True or kpi_pipeline): documents, extracted values, observations, mappings, results, SQL artifacts. Volumes: reports, wheels."
+      grants:
+        - principal: ${var.admin_group}
+          privileges: [ALL_PRIVILEGES]
+        - principal: ${var.user_group}
+          privileges: [USE_SCHEMA, SELECT, MODIFY]
+
+    kpi_gov:
+      catalog_name: ${var.catalog}
+      name: ${var.gov_schema}
+      comment: "Governed platform views (gv_*) and KPI functions (registry / demo mode). KPI-table checks read the tables the KPI table names instead."
+      grants:
+        - principal: ${var.admin_group}
+          privileges: [ALL_PRIVILEGES]
+        - principal: ${var.user_group}
+          privileges: [USE_SCHEMA, SELECT, EXECUTE]
+
+  volumes:
+    reports:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.kpi_evidence.name}
+      name: reports
+      volume_type: MANAGED
+      comment: "check/reports/ (reports for kpi_check), check/kpi_table.csv (optional KPI table), check/out/ (HTML + Excel reports), inbox/ (kpi_pipeline), artifacts/ (exported SQL)."
+      grants:
+        - principal: ${var.user_group}
+          privileges: [READ_VOLUME, WRITE_VOLUME]
+
+    wheels:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.kpi_evidence.name}
+      name: wheels
+      volume_type: MANAGED
+      comment: "kpi_evidence + reconloop wheels and requirements.txt, written by the kpi_wheels job. Notebooks: %pip install -r <this volume>/requirements.txt"
+      grants:
+        - principal: ${var.user_group}
+          privileges: [READ_VOLUME]

@@ -1,0 +1,5 @@
+Pinned upstream sources vendored into this repository (do not edit vendored files in place).
+Upgrade: re-export the upstream commit, update the commit here, re-run tests/test_upstream_pins.py.
+reconloop        https://github.com/jamesyoung93/reconloop                  b5aacdac7309511c2e886bd27c4f029f7a8e03b4  libs/reconloop (src, pyproject, LICENSE, README)  version 0.5.0 (comment-stripped, syntax tree verified)
+pptx_extract     https://github.com/jamesyoung93/powerpoint-data-extractor  871d06efd0a275e2d7a6fbeb71ba59a78e818cde  src/kpi_evidence/extract/_vendor/pptx_extract.py  version 1.1.0 (comment-stripped, syntax tree verified)
+insight_harness  https://github.com/jamesyoung93/insight_harness            a277a0769a31bf6102f08109283e2a1ace983e44  apps/insight_harness (full tree; integration patches listed in apps/insight_harness/PATCHES.md)

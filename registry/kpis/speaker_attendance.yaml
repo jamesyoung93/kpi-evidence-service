@@ -1,0 +1,35 @@
+kpi_id: speaker_attendance
+version: 1
+status: APPROVED
+label: Speaker program attendance
+definition: Attendances at speaker programs in the period (an HCP attending twice counts twice).
+unit: count
+aggregation: sum
+grains: [month, quarter, r3m, r6m, r12m, ytd]
+dimensions: [region, district, territory, specialty, payer_channel]
+synonyms: ["speaker attendance", "speaker program attendance", "speaker attendees", "program attendance", "speaker events attendance", "hcps attended"]
+mapping_description: Attendance at speaker programs (events where HCPs hear an expert speaker).
+claim_class: descriptive
+owner: field-analytics@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.005, abs: 0.0, use_display_rounding: true}
+harness_link: {metric_id: speaker_attendance, variant_id: attendees, source: source_a}
+platform:
+  source_views: [gv_rx_account_monthly]
+  template: |-
+    SELECT {measure} AS value
+    FROM ${gov}.gv_rx_account_monthly
+    WHERE brand = ${brand} AND ${window} AND ${scope}
+  params:
+    measure:
+      hypothesis: deduplication
+      default: attendances
+      options:
+        attendances: "SUM(speaker_attendance)"
+        distinct_hcps: "COUNT(DISTINCT CASE WHEN speaker_attendance > 0 THEN account_id END)"
+      describe: {attendances: "Every attendance counted", distinct_hcps: "Distinct HCPs who attended at least once"}
+      keywords: {distinct_hcps: ["unique hcps", "distinct hcps", "hcps attended", "unique attendees"]}
+      permitted: [attendances]
+  checks:
+    period_has_rows: "SELECT CASE WHEN COUNT(*) > 0 THEN 0 ELSE 1 END AS value FROM ${gov}.gv_rx_account_monthly WHERE ${window}"

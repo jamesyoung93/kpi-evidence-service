@@ -1,0 +1,49 @@
+# PARKED (2026-10-19) - NOT INCLUDED in the bundle (resources/parked/, .disabled extension).
+#
+# Both resources consume PUBLISHED values (and the review queue), and publication is off: the product is
+# a notebook package whose run ends in a comparison report, and nothing is piped onward automatically
+# until a hand-off to insight_harness is agreed. The Genie agent is also an AI surface (AI is off by
+# default) that needs the partner-powered AI setting. Switching on: docs/DEPLOY.md section 11.
+# The JSON files stay tested (tests/deploy/test_deploy_dashboard.py, test_deploy_genie.py).
+# Needs the parked variables consumer_group, reviewer_group, genie_title, genie_description.
+#
+# --- original definition (unchanged) ---------------------------------------------------------------
+# Consumption layer over the published values: an AI/BI dashboard and a Genie agent.
+#
+# Dashboard: the JSON uses unqualified table names; dataset_catalog / dataset_schema point every dataset
+# at this target's service schema. Recommended workflow: edit in the UI against a dev deployment, then
+#   databricks bundle generate dashboard --resource kpi_coverage --force
+# to write the change back into src/dashboards/kpi_coverage.lvdash.json (UI edits are not pulled back
+# automatically, and deploying a file that differs from the remote dashboard fails without --force).
+#
+# Genie agent (formerly "Genie space"; the YAML key is still genie_spaces; direct engine only): the
+# serialized space must name tables by full three-part names, and the bundle does not template inside
+# the file. The file therefore uses the placeholders __KPI_CATALOG__ and __KPI_SCHEMA__, and the
+# kpi_bootstrap job replaces them in the deployed agent (get_space -> substitute -> update_space).
+# Re-run kpi_bootstrap after any deploy that changes src/genie/kpi_published.geniespace.json.
+resources:
+  dashboards:
+    kpi_coverage:
+      display_name: KPI Evidence - coverage and review
+      file_path: ../src/dashboards/kpi_coverage.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${resources.schemas.kpi_evidence.name}
+      embed_credentials: false              # queries run with each viewer's own credentials
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+        - group_name: ${var.reviewer_group}
+          level: CAN_RUN
+
+  genie_spaces:
+    kpi_published:
+      title: ${var.genie_title}
+      description: ${var.genie_description}
+      warehouse_id: ${var.warehouse_id}
+      file_path: ../src/genie/kpi_published.geniespace.json
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+        - group_name: ${var.consumer_group}
+          level: CAN_RUN

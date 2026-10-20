@@ -1,0 +1,18 @@
+kpi_id: share_of_voice
+version: 1
+status: APPROVED
+label: Share of voice
+definition: Brand share of all promotional activity in the therapy area (third-party promotion audit). Not available on the platform.
+unit: fraction
+aggregation: point
+grains: [month, quarter]
+dimensions: []
+synonyms: ["share of voice", "sov", "promotional share of voice", "voice share"]
+mapping_description: Brand share of promotional activity versus competitors (share of voice).
+claim_class: descriptive
+owner: market-research@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.0, abs: 0.0005, use_display_rounding: true}
+harness_link: null
+platform: none

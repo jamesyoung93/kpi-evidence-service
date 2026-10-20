@@ -1,0 +1,5 @@
+brands:
+  - brand_id: KESTREL
+    display_name: Kestrel
+    aliases: ["kestrel", "kst", "brand kestrel", "kestrel brand"]
+    fiscal_year_start_month: 1

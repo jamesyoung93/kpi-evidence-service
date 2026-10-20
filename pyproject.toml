@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kpi_evidence"
+version = "0.1.0"
+description = "Notebook package that checks the KPI values printed in PowerPoint, PDF and Excel reports against platform tables and returns a comparison report (DataFrame, HTML and Excel)."
+readme = "PACKAGE.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "James Young" }]
+dependencies = [
+  "reconloop==0.5.0",
+  "pandas>=1.5.3,<4",
+  "pyyaml>=6,<7",
+  "duckdb>=1.0,<2",
+  "openpyxl>=3.1,<4",
+  "defusedxml>=0.7.1,<1",
+  "pdfplumber>=0.11,<0.12",
+  "databricks-sdk>=0.72",
+]
+
+[project.optional-dependencies]
+mlflow = ["mlflow-skinny>=3.4"]
+dev = ["pytest>=8", "python-pptx>=1.0,<2", "reportlab>=4", "sqlglot>=25", "streamlit>=1.50,<2", "altair>=5,<7"]
+
+[project.scripts]
+kpi-evidence = "kpi_evidence.cli:main"
+kpi-evidence-check = "kpi_evidence.cli:check_entry"
+kpi-evidence-bootstrap = "kpi_evidence.cli:bootstrap_entry"
+kpi-evidence-register = "kpi_evidence.cli:register_entry"
+kpi-evidence-extract = "kpi_evidence.cli:extract_entry"
+kpi-evidence-process = "kpi_evidence.cli:process_entry"
+kpi-evidence-dq = "kpi_evidence.cli:dq_entry"
+kpi-evidence-evaluate = "kpi_evidence.cli:evaluate_entry"
+
+[tool.hatch.build.targets.wheel]
+only-include = [
+  "src/kpi_evidence",
+  "src/sql",
+  "registry",
+  "samples/reports",
+  "samples/kpi_table_example.csv",
+  "samples/kpi_table_example.xlsx",
+  "samples/KPI_TABLE.md",
+  "apps/insight_harness/data/fact_source_a.csv",
+  "apps/insight_harness/data/fact_source_b.csv",
+  "apps/insight_harness/data/fact_referral.csv",
+  "apps/insight_harness/data/accounts.csv",
+]
+exclude = ["**/.gitkeep"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/kpi_evidence" = "kpi_evidence"
+"src/sql" = "kpi_evidence/_sql"
+"registry" = "kpi_evidence/_registry"
+"samples" = "kpi_evidence/_demo"
+"apps/insight_harness/data" = "kpi_evidence/_demo/platform"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers -p no:cacheprovider"
+markers = [
+  "spark: needs a local pyspark session (skipped when pyspark/java is unavailable)",
+  "slow: end-to-end runs over the synthetic report set",
+]

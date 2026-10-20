@@ -1,0 +1,47 @@
+# PARKED (2026-10-19): moved here from apps/insight_harness/app.yaml together with the review app
+# (resources/parked/app.yml.disabled). Switching the app on: copy this file back to
+# apps/insight_harness/app.yaml (the App reads app.yaml from its source folder); docs/DEPLOY.md section 11.
+#
+# Databricks App runtime config for insight_harness with the KPI evidence pages (kpi-evidence-service).
+# Not an upstream file: added by the deployment (owner: resources/parked/app.yml.disabled).
+#
+# When deployed with the bundle, the app resource's config.env OVERRIDES this env list and fills the
+# catalog / schema values per target. The names and valueFrom keys here must stay identical to that list
+# (tests/deploy enforces it), so a manual deploy from the UI behaves the same.
+# valueFrom keys are the app resource names: sql-warehouse, reports-volume, pipeline-job, genie-space,
+# mlflow-experiment (ai-model is bound for permissions only).
+# The command is not run in a shell; Databricks Apps sets the Streamlit port, address and headless mode.
+command: ["streamlit", "run", "app.py"]
+env:
+  - name: KPI_EVIDENCE_BACKEND
+    value: "databricks"
+  - name: KPI_EVIDENCE_CATALOG
+    value: "main"
+  - name: KPI_EVIDENCE_SCHEMA
+    value: "kpi_evidence"
+  - name: KPI_EVIDENCE_GOV_SCHEMA
+    value: "kpi_gov"
+  - name: KPI_EVIDENCE_WAREHOUSE_ID
+    valueFrom: sql-warehouse
+  - name: DATABRICKS_WAREHOUSE_ID
+    valueFrom: sql-warehouse
+  - name: KPI_EVIDENCE_VOLUME_PATH
+    valueFrom: reports-volume
+  - name: KPI_EVIDENCE_PIPELINE_JOB_ID
+    valueFrom: pipeline-job
+  - name: KPI_EVIDENCE_GENIE_SPACE_ID
+    valueFrom: genie-space
+  - name: KPI_EVIDENCE_AI_MODE
+    value: "ai_query"
+  - name: KPI_EVIDENCE_AI_MODEL
+    value: "system.ai.claude-sonnet-4-6"
+  - name: KPI_EVIDENCE_MLFLOW_EXPERIMENT
+    valueFrom: mlflow-experiment
+  - name: MLFLOW_EXPERIMENT_ID
+    valueFrom: mlflow-experiment
+  - name: MLFLOW_TRACKING_URI
+    value: "databricks"
+  - name: INSIGHT_HARNESS_BACKEND
+    value: "databricks"
+  - name: KPI_EVIDENCE_REVIEW_ENABLED
+    value: "true"

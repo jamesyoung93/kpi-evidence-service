@@ -1,0 +1,684 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "797b3a6f16b610f9b6ec41fc62586f39",
+        "question": [
+          "What is the latest published TRx and where does it come from?"
+        ]
+      },
+      {
+        "id": "c62f5a74ca565124bdc380042087e744",
+        "question": [
+          "Which Kestrel KPIs matched the platform in May 2026?"
+        ]
+      },
+      {
+        "id": "e091888e63d226fb760843bd4a3ee529",
+        "question": [
+          "Which published values were accepted despite a variance, and why?"
+        ]
+      },
+      {
+        "id": "e3c90f767198cef82487a8d658458c7a",
+        "question": [
+          "Which goal-list KPIs are missing from the current reports?"
+        ]
+      },
+      {
+        "id": "e4e742de63d18258e265c99ecbaa1a1d",
+        "question": [
+          "Show report-only KPIs and their sources"
+        ]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "__KPI_CATALOG__.__KPI_SCHEMA__.kpi_registry",
+        "description": [
+          "Governed KPI definitions (one row per KPI version). Use the latest APPROVED version to explain what a KPI means; never read values from this table."
+        ],
+        "column_configs": [
+          {
+            "column_name": "aggregation",
+            "description": [
+              "sum, ratio_of_sums, point or count."
+            ]
+          },
+          {
+            "column_name": "claim_class",
+            "description": [
+              "descriptive or causal (causal claims are never verified)."
+            ]
+          },
+          {
+            "column_name": "definition",
+            "description": [
+              "Business definition of the KPI."
+            ]
+          },
+          {
+            "column_name": "definition_hash",
+            "exclude": true
+          },
+          {
+            "column_name": "has_platform_spec",
+            "description": [
+              "FALSE = report-only KPI: no platform table computes it."
+            ]
+          },
+          {
+            "column_name": "kpi_id",
+            "description": [
+              "Governed KPI id."
+            ],
+            "synonyms": [
+              "kpi"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "kpi_version",
+            "description": [
+              "Definition version."
+            ]
+          },
+          {
+            "column_name": "label",
+            "description": [
+              "Plain KPI name."
+            ],
+            "synonyms": [
+              "name",
+              "kpi name"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "loaded_at",
+            "exclude": true
+          },
+          {
+            "column_name": "owner",
+            "description": [
+              "Accountable owner of the definition."
+            ]
+          },
+          {
+            "column_name": "registry_version",
+            "exclude": true
+          },
+          {
+            "column_name": "spec",
+            "exclude": true
+          },
+          {
+            "column_name": "status",
+            "description": [
+              "DRAFT, APPROVED or RETIRED."
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "unit",
+            "description": [
+              "count, usd or fraction."
+            ]
+          }
+        ]
+      },
+      {
+        "identifier": "__KPI_CATALOG__.__KPI_SCHEMA__.kpi_status_overview",
+        "description": [
+          "One row per goal-list KPI and scope: whether any current report contains it (found_in_reports), its latest status, and its latest published value. Use it for coverage questions such as 'which KPIs are missing' or 'which KPIs need review'."
+        ],
+        "column_configs": [
+          {
+            "column_name": "brand",
+            "description": [
+              "Brand id (upper case)."
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "found_in_reports",
+            "description": [
+              "FALSE = on the goal list but absent from every current report."
+            ],
+            "synonyms": [
+              "missing",
+              "not found"
+            ]
+          },
+          {
+            "column_name": "has_platform_source",
+            "description": [
+              "FALSE = report-only KPI."
+            ]
+          },
+          {
+            "column_name": "kpi_id",
+            "description": [
+              "Governed KPI id."
+            ],
+            "synonyms": [
+              "kpi"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "kpi_label",
+            "description": [
+              "Plain KPI name."
+            ],
+            "synonyms": [
+              "kpi name"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "latest_period_end",
+            "description": [
+              "Period end of the latest current result."
+            ]
+          },
+          {
+            "column_name": "latest_status_group",
+            "description": [
+              "Good, Needs review, Blocked or Not found."
+            ],
+            "synonyms": [
+              "group"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "latest_status_label",
+            "description": [
+              "Plain status of the latest current result."
+            ],
+            "synonyms": [
+              "status"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "published_evidence_uri",
+            "description": [
+              "Source file of the latest published value."
+            ],
+            "synonyms": [
+              "source"
+            ]
+          },
+          {
+            "column_name": "published_label",
+            "description": [
+              "Publication label of the latest published value."
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "published_value",
+            "description": [
+              "Latest published value, if any."
+            ]
+          }
+        ]
+      },
+      {
+        "identifier": "__KPI_CATALOG__.__KPI_SCHEMA__.platform_kpi_values",
+        "description": [
+          "Platform-computed KPI time series under the governed definition (deterministic SQL). These are platform numbers, not report values; label them 'platform-computed'."
+        ],
+        "column_configs": [
+          {
+            "column_name": "brand",
+            "description": [
+              "Brand id (upper case)."
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "components",
+            "exclude": true
+          },
+          {
+            "column_name": "computed_at",
+            "exclude": true
+          },
+          {
+            "column_name": "definition_hash",
+            "exclude": true
+          },
+          {
+            "column_name": "error",
+            "description": [
+              "Why no value could be computed for this period, if any."
+            ]
+          },
+          {
+            "column_name": "kpi_id",
+            "description": [
+              "Governed KPI id."
+            ],
+            "synonyms": [
+              "kpi"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "period_end",
+            "description": [
+              "Last day of the period."
+            ]
+          },
+          {
+            "column_name": "period_grain",
+            "description": [
+              "month, quarter, r3m, r6m, r12m or ytd."
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "period_start",
+            "description": [
+              "First day of the period."
+            ]
+          },
+          {
+            "column_name": "platform_snapshot",
+            "exclude": true
+          },
+          {
+            "column_name": "scope_key",
+            "description": [
+              "'{}' is the brand total; otherwise JSON such as {\"region\":\"West\"}."
+            ]
+          },
+          {
+            "column_name": "sql_artifact_id",
+            "exclude": true
+          },
+          {
+            "column_name": "value",
+            "description": [
+              "Platform-computed value (fractions for percentages)."
+            ],
+            "synonyms": [
+              "platform value"
+            ]
+          }
+        ]
+      },
+      {
+        "identifier": "__KPI_CATALOG__.__KPI_SCHEMA__.published_kpis_current",
+        "description": [
+          "One current row per brand, KPI, scope and period: report values a reviewer approved or the automatic policy published (retracted and superseded rows are excluded). This is the only table that holds published report values."
+        ],
+        "column_configs": [
+          {
+            "column_name": "approved_at",
+            "description": [
+              "When the value was approved."
+            ]
+          },
+          {
+            "column_name": "approved_by",
+            "description": [
+              "Reviewer email, or system:auto-policy@v1 for automatic publication."
+            ],
+            "synonyms": [
+              "approver"
+            ]
+          },
+          {
+            "column_name": "brand",
+            "description": [
+              "Brand id (upper case)."
+            ],
+            "synonyms": [
+              "product"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "decision_id",
+            "exclude": true
+          },
+          {
+            "column_name": "definition_hash",
+            "exclude": true
+          },
+          {
+            "column_name": "display_label",
+            "description": [
+              "Plain-language publication label: Matches platform, Accepted variance, Report-only, Corrected by reviewer, Captured candidate."
+            ],
+            "synonyms": [
+              "label"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "evidence_hash",
+            "exclude": true
+          },
+          {
+            "column_name": "evidence_locator",
+            "description": [
+              "Where in the file: slide or page, chart or table, series, point."
+            ],
+            "synonyms": [
+              "location",
+              "slide"
+            ]
+          },
+          {
+            "column_name": "evidence_uri",
+            "description": [
+              "Volume path of the source report file."
+            ],
+            "synonyms": [
+              "source",
+              "source file",
+              "report file"
+            ]
+          },
+          {
+            "column_name": "extraction_method",
+            "description": [
+              "How the number was read: NATIVE_CHART, NATIVE_TABLE, PDF_TABLE, ..."
+            ]
+          },
+          {
+            "column_name": "harness_metric_id",
+            "exclude": true
+          },
+          {
+            "column_name": "harness_source",
+            "exclude": true
+          },
+          {
+            "column_name": "harness_variant_id",
+            "exclude": true
+          },
+          {
+            "column_name": "kpi_id",
+            "description": [
+              "Governed KPI id from the registry."
+            ],
+            "synonyms": [
+              "kpi",
+              "metric"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "kpi_version",
+            "description": [
+              "Registry version of the KPI definition."
+            ]
+          },
+          {
+            "column_name": "period_end",
+            "description": [
+              "Last day of the measured period (May 2026 = 2026-05-31)."
+            ]
+          },
+          {
+            "column_name": "period_grain",
+            "description": [
+              "month, quarter, r3m, r6m, r12m or ytd."
+            ],
+            "synonyms": [
+              "grain"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "period_label",
+            "description": [
+              "The period as printed in the report."
+            ]
+          },
+          {
+            "column_name": "period_start",
+            "description": [
+              "First day of the measured period."
+            ]
+          },
+          {
+            "column_name": "platform_value",
+            "description": [
+              "Platform-computed value under the governed definition, when one exists."
+            ]
+          },
+          {
+            "column_name": "publication_id",
+            "exclude": true
+          },
+          {
+            "column_name": "published_at",
+            "exclude": true
+          },
+          {
+            "column_name": "rationale",
+            "description": [
+              "Reviewer rationale (required for accepted variances and corrections)."
+            ]
+          },
+          {
+            "column_name": "result_id",
+            "exclude": true
+          },
+          {
+            "column_name": "retracted",
+            "exclude": true
+          },
+          {
+            "column_name": "review_action",
+            "description": [
+              "ACCEPT or CORRECT."
+            ]
+          },
+          {
+            "column_name": "scope_key",
+            "description": [
+              "'{}' is the brand total; otherwise JSON such as {\"region\":\"West\"}."
+            ],
+            "synonyms": [
+              "scope",
+              "segment"
+            ]
+          },
+          {
+            "column_name": "sql_artifact_id",
+            "exclude": true
+          },
+          {
+            "column_name": "sql_sha",
+            "exclude": true
+          },
+          {
+            "column_name": "superseded_by",
+            "exclude": true
+          },
+          {
+            "column_name": "tolerance",
+            "exclude": true
+          },
+          {
+            "column_name": "unit",
+            "description": [
+              "count, usd or fraction."
+            ]
+          },
+          {
+            "column_name": "validation_status",
+            "description": [
+              "VERIFIED, REPORT_ONLY, VARIANCE_REVIEW, INCOMPATIBLE_DEFINITION, ... (status when it was approved)."
+            ],
+            "synonyms": [
+              "status"
+            ],
+            "enable_entity_matching": true,
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "value",
+            "description": [
+              "Published value. Percentages are stored as fractions (0.092 = 9.2%)."
+            ],
+            "synonyms": [
+              "report value"
+            ]
+          },
+          {
+            "column_name": "variance_rel",
+            "description": [
+              "Relative difference (platform - report) / report."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "instructions": {
+    "text_instructions": [
+      {
+        "id": "b45e11e5887af0c86c4082d1043723f7",
+        "content": [
+          "You answer questions about KPI values captured from brand reports and approved for publication.\n",
+          "Values: take every report value from published_kpis_current. Never present a number from platform_kpi_values as a published value; call it 'platform-computed'.\n",
+          "Always show validation_status and display_label next to every value, and its evidence: evidence_uri (the source file) and evidence_locator (slide or page, chart or table). Include approved_by and period_end.\n",
+          "display_label meanings: 'Matches platform' = the platform number agrees under the governed definition; 'Accepted variance' = a reviewer accepted a difference (also show platform_value and variance_rel); 'Report-only' = captured from the report with its source location, not independently verified; 'Corrected by reviewer' = a reviewer corrected the extracted number; 'Captured candidate' = not a registered KPI yet.\n",
+          "'Matched the platform' means validation_status = 'VERIFIED'.\n",
+          "Periods: period_end is the last day of the measured period. 'May 2026' means period_end = DATE '2026-05-31' with period_grain = 'month' unless the user asks for a quarter or a rolling window.\n",
+          "Scope: scope_key = '{}' is the brand total; otherwise it is JSON such as {\"region\":\"West\"}. Default to the brand total unless the user names a region, district, territory, specialty or payer channel.\n",
+          "Brands are stored as upper-case brand ids; match brand names case-insensitively.\n",
+          "Percentages are stored as fractions (0.092 = 9.2%); show them as percentages.\n",
+          "Definitions: explain a KPI from kpi_registry (latest APPROVED kpi_version). Coverage questions (missing KPIs, what needs review) use kpi_status_overview.\n",
+          "If no published row answers the question, say so plainly; do not estimate or fill in values."
+        ]
+      }
+    ],
+    "example_question_sqls": [
+      {
+        "id": "1f44ae1b1830aab3a0598a6116f5dae3",
+        "question": [
+          "Show report-only KPIs and their sources"
+        ],
+        "sql": [
+          "SELECT brand, kpi_id, scope_key, period_label, period_end, value, unit, display_label, validation_status,\n",
+          "  evidence_uri, evidence_locator, approved_by\n",
+          "FROM __KPI_CATALOG__.__KPI_SCHEMA__.published_kpis_current\n",
+          "WHERE validation_status = 'REPORT_ONLY'\n",
+          "ORDER BY brand, kpi_id, period_end DESC"
+        ],
+        "usage_guidance": [
+          "Use when the user asks for report-only or unverified values."
+        ]
+      },
+      {
+        "id": "67e84511b5a6219592e5f7d1d0a71fb6",
+        "question": [
+          "Which goal-list KPIs are missing from the current reports?"
+        ],
+        "sql": [
+          "SELECT brand, kpi_id, kpi_label, scope_key, has_platform_source, latest_status_group\n",
+          "FROM __KPI_CATALOG__.__KPI_SCHEMA__.kpi_status_overview\n",
+          "WHERE NOT found_in_reports\n",
+          "ORDER BY brand, kpi_id"
+        ],
+        "usage_guidance": [
+          "Use for coverage questions: missing, not found, not reported."
+        ]
+      },
+      {
+        "id": "f4ddab4f7db5f882f4611a19530d83f3",
+        "question": [
+          "Which KPIs matched the platform in a given month?"
+        ],
+        "sql": [
+          "SELECT brand, kpi_id, scope_key, period_end, value, unit, display_label, validation_status,\n",
+          "  platform_value, evidence_uri, evidence_locator\n",
+          "FROM __KPI_CATALOG__.__KPI_SCHEMA__.published_kpis_current\n",
+          "WHERE brand = :brand AND validation_status = 'VERIFIED'\n",
+          "  AND period_grain = 'month' AND period_end = CAST(:period_end AS DATE)\n",
+          "ORDER BY kpi_id, scope_key"
+        ],
+        "parameters": [
+          {
+            "name": "brand",
+            "type_hint": "STRING",
+            "description": [
+              "Brand id, upper case"
+            ]
+          },
+          {
+            "name": "period_end",
+            "type_hint": "STRING",
+            "description": [
+              "Last day of the month, YYYY-MM-DD"
+            ]
+          }
+        ],
+        "usage_guidance": [
+          "Use for 'matched the platform' / 'verified' questions about one month."
+        ]
+      },
+      {
+        "id": "fa3cea373432bda56a60e56c2089cbf7",
+        "question": [
+          "Show the published value and evidence for a KPI"
+        ],
+        "sql": [
+          "SELECT brand, kpi_id, period_label, period_end, value, unit, display_label, validation_status,\n",
+          "  platform_value, variance_rel, evidence_uri, evidence_locator, approved_by, approved_at\n",
+          "FROM __KPI_CATALOG__.__KPI_SCHEMA__.published_kpis_current\n",
+          "WHERE kpi_id = :kpi_id AND brand = :brand AND scope_key = '{}'\n",
+          "ORDER BY period_end DESC"
+        ],
+        "parameters": [
+          {
+            "name": "brand",
+            "type_hint": "STRING",
+            "description": [
+              "Brand id, upper case"
+            ]
+          },
+          {
+            "name": "kpi_id",
+            "type_hint": "STRING",
+            "description": [
+              "Governed KPI id, for example trx"
+            ]
+          }
+        ],
+        "usage_guidance": [
+          "Use when the user asks for a specific KPI value or where it comes from."
+        ]
+      }
+    ]
+  }
+}

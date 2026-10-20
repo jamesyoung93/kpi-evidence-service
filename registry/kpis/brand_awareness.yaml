@@ -1,0 +1,18 @@
+kpi_id: brand_awareness
+version: 1
+status: APPROVED
+label: Brand awareness (aided)
+definition: Share of surveyed HCPs aware of the brand when prompted (market-research survey). No platform table holds survey data.
+unit: fraction
+aggregation: point
+grains: [month, quarter]
+dimensions: [specialty]
+synonyms: ["brand awareness", "aided awareness", "awareness", "unaided awareness", "hcp awareness"]
+mapping_description: Market-research survey result - share of HCPs aware of the brand.
+claim_class: descriptive
+owner: market-research@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.0, abs: 0.0005, use_display_rounding: true}
+harness_link: null
+platform: none

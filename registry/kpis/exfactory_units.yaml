@@ -1,0 +1,30 @@
+kpi_id: exfactory_units
+version: 1
+status: APPROVED
+label: Ex-factory units
+definition: Units shipped from the manufacturer to wholesalers in the period (supply-chain finance feed).
+unit: count
+aggregation: sum
+grains: [month, quarter, r3m, r6m, r12m, ytd]
+dimensions: []
+synonyms: ["ex-factory", "ex factory", "ex-factory units", "exfactory", "shipments", "units shipped", "factory sales"]
+mapping_description: Product units shipped from the manufacturer (ex-factory sales).
+claim_class: descriptive
+owner: supply-finance@example.com
+approved_by: kpi-registry-owner@example.com
+approved_at: 2026-10-19
+tolerance: {rel: 0.005, abs: 0.0, use_display_rounding: true}
+harness_link: null
+platform:
+  source_views: [exfactory_monthly]
+  template: |-
+    SELECT SUM(units_shipped) AS value
+    FROM (
+      SELECT brand, units_shipped,
+             CAST(month || '-01' AS DATE) AS month_start,
+             last_day(CAST(month || '-01' AS DATE)) AS month_end
+      FROM ${restricted}.exfactory_monthly
+    ) shipments
+    WHERE brand = ${brand} AND ${window}
+  params: {}
+  checks: {}

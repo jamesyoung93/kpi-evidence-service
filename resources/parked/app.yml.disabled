@@ -1,0 +1,114 @@
+# PARKED (2026-10-19) - NOT INCLUDED in the bundle (databricks.yml includes resources/*.yml only, and
+# this file is in resources/parked/ with a .disabled extension).
+#
+# Why parked: the product is a code package used from a notebook. A Streamlit app cannot reach the
+# live warehouse backend, and nothing is piped onward automatically: "we don't want to
+# automatically pipe the things into the app at the end. At least not yet." A run ends in a comparison
+# report (DataFrame + HTML + Excel). This review/publication app stays parked until a hand-off to
+# insight_harness is agreed. Switching it on: docs/DEPLOY.md section 11 and resources/parked/README.md.
+#
+# --- original definition (unchanged except: the MLflow experiment moved to resources/jobs.yml) ---------
+# The review and publication app: the vendored insight_harness with the KPI evidence pages mounted
+# (apps/insight_harness; integration patches in apps/insight_harness/PATCHES.md).
+#
+# Identity model (decision D9):
+#   * Writes run as the app service principal (decisions, publications, uploads). Reviewers need no
+#     MODIFY on service tables; each decision records X-Forwarded-Email and X-Request-Id, and the app
+#     authorizes reviewers from the `reviewers` table.
+#   * On-behalf-of-user only for Genie (user_api_scopes: [genie]) so answers honor each user's grants.
+#
+# Before `bundle deploy`, build the wheels the app installs: python scripts/parked/build_app_bundle.py --install.
+# `bundle deploy` uploads the source but does not start it: run
+#   databricks bundle run kpi_review -t <target>
+#
+# config.env overrides apps/insight_harness/app.yaml (parked copy: resources/parked/insight_harness.app.yaml,
+# kept in sync by tests/deploy). value_from names below must match the resource `name`s in the resources list.
+# Needs the parked variables (app_name, consumer_group, reviewer_group, genie_title) and the parked
+# Genie agent (resources/parked/consume.yml.disabled) for the genie-space binding.
+resources:
+  apps:
+    kpi_review:
+      name: ${var.app_name}
+      description: "KPI evidence: review exceptions, accept / reject / correct, publish approved KPI values."
+      source_code_path: ../apps/insight_harness
+      compute_size: MEDIUM
+      config:
+        command: ["streamlit", "run", "app.py"]
+        env:
+          - name: KPI_EVIDENCE_BACKEND
+            value: databricks
+          - name: KPI_EVIDENCE_CATALOG
+            value: ${var.catalog}
+          - name: KPI_EVIDENCE_SCHEMA
+            value: ${resources.schemas.kpi_evidence.name}
+          - name: KPI_EVIDENCE_GOV_SCHEMA
+            value: ${resources.schemas.kpi_gov.name}
+          - name: KPI_EVIDENCE_WAREHOUSE_ID
+            value_from: sql-warehouse
+          - name: DATABRICKS_WAREHOUSE_ID        # conventional name used by SQL connector snippets
+            value_from: sql-warehouse
+          - name: KPI_EVIDENCE_VOLUME_PATH       # resolves to /Volumes/<catalog>/<schema>/reports
+            value_from: reports-volume
+          - name: KPI_EVIDENCE_PIPELINE_JOB_ID   # the Confirm button re-runs the pipeline (run_now)
+            value_from: pipeline-job
+          - name: KPI_EVIDENCE_GENIE_SPACE_ID
+            value_from: genie-space
+          - name: KPI_EVIDENCE_AI_MODE
+            value: ${var.ai_mode}
+          - name: KPI_EVIDENCE_AI_MODEL
+            value: ${var.ai_model}
+          - name: KPI_EVIDENCE_MLFLOW_EXPERIMENT # an experiment ID on Databricks
+            value_from: mlflow-experiment
+          - name: MLFLOW_EXPERIMENT_ID
+            value_from: mlflow-experiment
+          - name: MLFLOW_TRACKING_URI
+            value: databricks
+          - name: INSIGHT_HARNESS_BACKEND
+            value: databricks
+          - name: KPI_EVIDENCE_REVIEW_ENABLED
+            value: "true"
+      resources:
+        - name: sql-warehouse
+          description: Warehouse for reads, decisions and publication (app service principal).
+          sql_warehouse:
+            id: ${var.warehouse_id}
+            permission: CAN_USE
+        - name: reports-volume
+          description: Report uploads (inbox/) and exported SQL artifacts.
+          uc_securable:
+            securable_type: VOLUME
+            securable_full_name: ${var.catalog}.${resources.schemas.kpi_evidence.name}.${resources.volumes.reports.name}
+            permission: WRITE_VOLUME
+        - name: pipeline-job
+          description: Re-run the pipeline after a reviewer confirms report metadata.
+          job:
+            id: ${resources.jobs.kpi_pipeline.id}
+            permission: CAN_MANAGE_RUN
+        - name: genie-space
+          description: Genie agent over the published values (asked on behalf of the user).
+          genie_space:
+            name: ${var.genie_title}
+            space_id: ${resources.genie_spaces.kpi_published.id}
+            permission: CAN_RUN
+        # Unity Gateway enforcement: bind the model service as a UC securable. A serving_endpoint
+        # resource pointing at a system.ai model stops working once enforcement is on.
+        - name: ai-model
+          description: Model service for mapping suggestions and corrections (ai_mode != off).
+          uc_securable:
+            securable_type: MODEL_SERVICE
+            securable_full_name: ${var.ai_model}
+            permission: EXECUTE
+        - name: mlflow-experiment
+          description: Traces and evaluation metrics.
+          experiment:
+            experiment_id: ${resources.experiments.kpi_evidence.id}
+            permission: CAN_EDIT
+      user_api_scopes:
+        - genie
+      permissions:
+        - group_name: ${var.admin_group}
+          level: CAN_MANAGE
+        # Reviewers open the app through this grant too (keep them in consumer_group); the review pages
+        # check the `reviewers` table before showing decision buttons.
+        - group_name: ${var.consumer_group}
+          level: CAN_USE

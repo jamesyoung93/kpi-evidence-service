@@ -1,0 +1,11 @@
+version: v1
+auto_publish:
+  verified: false
+  report_only_known_layout: false
+  require_structured_extraction: true
+  allow_mapping_methods: [SYNONYM, MEMORY, REVIEWER]
+  exclude_hidden_slides: true
+metadata:
+  required_fields: [brand, report_type, period_end]
+conflicts:
+  compare_display_rounding: true

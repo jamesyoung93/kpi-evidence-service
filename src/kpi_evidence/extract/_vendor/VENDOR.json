@@ -1,0 +1,10 @@
+{
+  "package": "pptx_extract",
+  "upstream": "https://github.com/jamesyoung93/powerpoint-data-extractor",
+  "commit": "871d06efd0a275e2d7a6fbeb71ba59a78e818cde",
+  "file": "pptx_extract.py",
+  "upstream_version": "1.1.0",
+  "upstream_sha256": "807f4889e5e84eaf97ec4fdede6b73146c4524c26fd0183ff9b108c61343f142",
+  "sha256": "7b58b5a4a435fb24a677476c9928e1368dcb96150a6600c7ec0d09ca4c5e8749",
+  "policy": "Upstream file with comments removed and behavior unchanged; do not edit it, replace it with a newer upstream file and update commit, upstream_version, upstream_sha256 and sha256."
+}

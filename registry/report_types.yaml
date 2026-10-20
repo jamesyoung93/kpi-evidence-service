@@ -1,0 +1,13 @@
+report_types:
+  - report_type: monthly_brand_review
+    display_name: Monthly brand review
+    keywords: ["monthly brand review", "brand review", "monthly review", "mbr"]
+    default_grain: month
+  - report_type: executive_summary
+    display_name: Executive summary
+    keywords: ["executive summary", "exec summary", "leadership update", "qbr", "quarterly business review"]
+    default_grain: quarter
+  - report_type: field_update
+    display_name: Field performance update
+    keywords: ["field update", "field performance", "sales update", "update"]
+    default_grain: month

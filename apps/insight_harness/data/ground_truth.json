@@ -1,0 +1,208 @@
+{
+  "data_version": "c7610c02c95f",
+  "seed": 42,
+  "months": [
+    "2024-07",
+    "2024-08",
+    "2024-09",
+    "2024-10",
+    "2024-11",
+    "2024-12",
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "grain": {
+    "source_a": [
+      "account_id",
+      "month"
+    ],
+    "source_b": [
+      "month",
+      "territory",
+      "district",
+      "region",
+      "specialty",
+      "payer_channel"
+    ],
+    "accounts": [
+      "account_id"
+    ],
+    "referral": [
+      "account_id",
+      "month"
+    ]
+  },
+  "events": {
+    "speaker_launch": {
+      "start": "2025-10",
+      "scope": {
+        "territory": [
+          "E-CAR-01",
+          "E-END-01"
+        ]
+      },
+      "control_scope": {
+        "territory": [
+          "N-CAR-01",
+          "N-END-01"
+        ]
+      },
+      "true_effect_pct": 0.08,
+      "metrics": [
+        "trx",
+        "nrx",
+        "nbrx"
+      ],
+      "treatment_flag": "speaker_launch_active"
+    },
+    "formulary_win": {
+      "start": "2026-01",
+      "scope": {
+        "region": "South",
+        "payer_channel": "Medicare Part D"
+      },
+      "control_scope": {
+        "region": [
+          "North",
+          "East"
+        ],
+        "payer_channel": "Medicare Part D"
+      },
+      "true_effect_pct": 0.1,
+      "metrics": [
+        "trx",
+        "nrx"
+      ],
+      "treatment_flag": "formulary_win_active"
+    },
+    "competitor_launch": {
+      "start": "2026-04",
+      "scope": {
+        "region": "West",
+        "specialty": "Cardiology"
+      },
+      "control_scope": {
+        "region": [
+          "North",
+          "South",
+          "East"
+        ],
+        "specialty": "Cardiology"
+      },
+      "true_effect_pct": -0.22,
+      "metrics": [
+        "trx",
+        "nrx",
+        "nbrx"
+      ],
+      "treatment_flag": "competitor_launch_active"
+    }
+  },
+  "source_b_issues": {
+    "bias_by_region": {
+      "North": 1.025,
+      "South": 1.035,
+      "East": 1.03,
+      "West": 1.032
+    },
+    "lag_months": 1,
+    "restated_months": [
+      "2024-07",
+      "2024-08",
+      "2024-09"
+    ],
+    "restatement_factor": 1.015,
+    "affected_columns": [
+      "trx_units",
+      "trx_dollars",
+      "trx_normalized",
+      "nrx",
+      "nbrx",
+      "market_trx",
+      "market_nrx",
+      "il17_competitor_a_trx",
+      "il17_competitor_b_trx",
+      "advanced_other_trx",
+      "il17_class_trx",
+      "advanced_therapy_trx"
+    ]
+  },
+  "referral_source": {
+    "coverage_target": 0.8,
+    "expected_accounts": 240,
+    "observed_accounts": 192,
+    "coverage_rate": 0.8,
+    "coverage_rule": "synthetic account sequence excludes every fifth HCP",
+    "zero_semantics": "zero is observed only for covered account-months",
+    "projection": "none; observed-only metrics"
+  },
+  "market_baskets": {
+    "il17_class": {
+      "members": [
+        "brand",
+        "competitor_a",
+        "competitor_b"
+      ],
+      "denominator": "il17_class_trx"
+    },
+    "advanced_therapy": {
+      "members": [
+        "brand",
+        "competitor_a",
+        "competitor_b",
+        "advanced_other"
+      ],
+      "denominator": "advanced_therapy_trx"
+    }
+  },
+  "synthetic_identifiers": {
+    "npi": "10-digit demo identifier in reserved 9999xxxxxx pattern; not a real NPI"
+  },
+  "metric_coverage": {
+    "new_writers": {
+      "warmup_month": "2024-07",
+      "semantics": "undefined because no prior measured month exists"
+    }
+  },
+  "variant_definitions": {
+    "trx": {
+      "units": "total prescriptions",
+      "dollars": "gross prescription value",
+      "normalized": "payer-channel normalized equivalent units"
+    },
+    "trx_share": {
+      "numerator": "brand TRx units",
+      "denominator": "total market TRx units"
+    },
+    "call_attainment": {
+      "numerator": "details delivered",
+      "denominator": "call plan"
+    }
+  },
+  "invariants": [
+    "nbrx <= nrx <= trx_units",
+    "market_trx >= trx_units",
+    "market_nrx >= nrx",
+    "advanced_therapy_trx >= il17_class_trx >= trx_units",
+    "new_writers is undefined in the first measured month",
+    "one source_a row per account_id/month",
+    "accounts are derived from source_a",
+    "referral source covers exactly 80% of HCPs and is not projected"
+  ]
+}

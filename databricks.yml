@@ -1,0 +1,98 @@
+bundle:
+  name: kpi-evidence-service
+  engine: direct
+  databricks_cli_version: ">= 1.3.0"
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for the service and governed schemas (set per target or --var catalog=...).
+  schema:
+    description: Service schema (optional Delta state, reports + wheels volumes). Dev mode prefixes schema names per user.
+    default: kpi_evidence
+  gov_schema:
+    description: Governed platform views and KPI functions (registry / demo mode; src/sql/governed_views.sql).
+    default: kpi_gov
+  platform_schema:
+    description: Synthetic platform base tables. Demo only; the schema resource is declared in targets.dev.
+    default: platform_demo
+  warehouse_name:
+    description: SQL warehouse for the SQL tasks of kpi_bootstrap and kpi_pipeline (notebooks do not need one).
+    default: Serverless Starter Warehouse
+  warehouse_id:
+    description: SQL warehouse id, looked up from warehouse_name at deploy time.
+    lookup:
+      warehouse: ${var.warehouse_name}
+  ai_mode:
+    description: "off | ai_query | gateway for the pipeline jobs. Off by default: every deterministic path works without AI."
+    default: "off"
+  ai_model:
+    description: Unity Gateway model service used when ai_mode=ai_query (system.ai.* names only).
+    default: system.ai.claude-sonnet-4-6
+  notify_email:
+    description: Address for job failure and duration alerts.
+    default: ${workspace.current_user.userName}
+  admin_group:
+    description: Group that manages every deployed resource (and alone may write the wheels volume).
+    default: kpi-evidence-admins
+  user_group:
+    description: People who run the notebook (grants in resources/uc.yml; see docs/DEPLOY.md section 6).
+    default: kpi-evidence-users
+  load_demo:
+    description: Bootstrap loads the synthetic platform tables (true only for demo deployments).
+    default: "false"
+  prod_run_as_sp:
+    description: Application (client) id of the service principal that owns and runs the prod deployment.
+    default: REPLACE_WITH_DEPLOY_SP_APPLICATION_ID
+
+sync:
+  include:
+    - notebooks/*.py
+  exclude:
+    - apps/**
+
+artifacts:
+  kpi_evidence_whl:
+    type: whl
+    build: uv build --wheel
+    path: .
+    dynamic_version: true
+  reconloop_whl:
+    type: whl
+    build: uv build --wheel
+    path: libs/reconloop
+    dynamic_version: true
+
+targets:
+  dev:
+    mode: development
+    default: true
+    variables:
+      catalog: main
+      load_demo: "true"
+      admin_group: admins
+      user_group: users
+    resources:
+      schemas:
+        platform_demo:
+          catalog_name: ${var.catalog}
+          name: ${var.platform_schema}
+          comment: "DEMO ONLY: synthetic platform base tables loaded by the bootstrap job (load_demo=true)."
+      jobs:
+        kpi_bootstrap:
+          tasks:
+            - task_key: bootstrap
+              python_wheel_task:
+                named_parameters:
+                  platform_schema: ${resources.schemas.platform_demo.name}
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      service_principal_name: ${var.prod_run_as_sp}
+    variables:
+      notify_email: kpi-evidence-owners@example.com
